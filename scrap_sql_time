@@ -48,6 +48,8 @@ def parsing():
         else:
             break
 
+print("hi")
+
 def main():
     schedule.every().monday.at('10:00').do(parsing)
 
@@ -56,6 +58,8 @@ def main():
 
 if __name__ == '_main_':
     main()
+
+print('He2')
 
 conn.commit()
 cur.close()
