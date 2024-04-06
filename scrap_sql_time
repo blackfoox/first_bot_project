@@ -48,6 +48,8 @@ def parsing():
         else:
             break
 
+print("hi")
+
 def main():
     schedule.every().monday.at('10:00').do(parsing)
 
