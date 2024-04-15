@@ -49,6 +49,7 @@ def parsing():
             break
 
 print("hi")
+print('asdwasd')
 
 def main():
     schedule.every().monday.at('10:00').do(parsing)
