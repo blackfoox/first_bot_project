@@ -60,8 +60,6 @@ def main():
 if __name__ == '_main_':
     main()
 
-print('He2')
-
 conn.commit()
 cur.close()
 conn.close()
