@@ -17,6 +17,8 @@ cur.execute("""CREATE TABLE IF NOT EXISTS person (
 );
 """)
 
+print('hello')
+
 #Удаление всех данных из sql
 with conn.cursor() as cursor:
     delet_query = "DELETE FROM person"
