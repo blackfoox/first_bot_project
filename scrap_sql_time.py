@@ -3,7 +3,6 @@ from bs4 import BeautifulSoup
 import requests
 import time
 import random
-import schedule
 
 conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres",
                         password="yashka000", port="5432")
@@ -16,8 +15,6 @@ cur.execute("""CREATE TABLE IF NOT EXISTS person (
             game_link TEXT
 );
 """)
-
-print('hello')
 
 #Удаление всех данных из sql
 with conn.cursor() as cursor:
@@ -33,7 +30,7 @@ def parsing():
         resp = requests.get(url)
         soup = BeautifulSoup(resp.text, 'html.parser')
 
-        data = soup.select("._card_1ovwy_1")
+        data = soup.select("._card_1u499_4")
         time.sleep(1 + (random.random() * (9 - 5)))
 
         #Проверка на наличие определенной игры в sql 
@@ -47,21 +44,10 @@ def parsing():
                 cur.execute("""INSERT INTO person (game_name, game_link)
                 VALUES (%s, %s);
                 """, (item["title"], f"https://stopgame.ru{item["href"]}"))
+                conn.commit()
         else:
             break
 
-print("hi")
-print('asdwasd')
 
-def main():
-    schedule.every().monday.at('10:00').do(parsing)
-
-    while True:
-        schedule.run_pending()
-
-if __name__ == '_main_':
-    main()
-
-conn.commit()
 cur.close()
 conn.close()
