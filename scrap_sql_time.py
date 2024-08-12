@@ -4,50 +4,71 @@ import requests
 import time
 import random
 
-conn = psycopg2.connect(host="localhost", dbname="postgres", user="postgres",
-                        password="yashka000", port="5432")
+class GameScraper:
+    def __init__(self, db_config):
+        """"Инициализация соединения с базой данных"""
+        self.conn = psycopg2.connect(**db_config)
+        self.cur = self.conn.cursor()
 
-cur = conn.cursor()
+    def create_table(self):
+        """"Создание таблицы, если она отсутствует"""
+        self.cur.execute("""
+            CREATE TABLE IF NOT EXISTS person (
+                game_name TEXT,
+                game_link TEXT
+            );
+        """)
 
-#Создание sql
-cur.execute("""CREATE TABLE IF NOT EXISTS person (
-            game_name TEXT,
-            game_link TEXT
-);
-""")
+    def clear_table(self):
+        """"Удаление всех данных из таблицы."""
+        self.cur.execute("DELETE FROM person")
+        self.conn.commit()
 
-#Удаление всех данных из sql
-with conn.cursor() as cursor:
-    delet_query = "DELETE FROM person"
-    cursor.execute(delet_query)
+    def parse_games(self):
+        """"Парсинг сайта и добавление новых игр в базу данных"""
+        page = 0
+        while True:
+            page += 1
+            url = f'https://stopgame.ru/games/new?p={page}'
+            resp = requests.get(url)
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            data = soup.select("._card_1u499_4")
+            time.sleep(1 + (random.random() * (9 - 5)))
 
-def parsing():
-    #Итерация для заполучения игр с сайта
-    page = 0
-    while True:
-        page += 1    
-        url = 'https://stopgame.ru/games/new?p=' + str(page)
-        resp = requests.get(url)
-        soup = BeautifulSoup(resp.text, 'html.parser')
+            #Проверка на наличие определенной игры в SQL
+            if data:
+                self.cur.execute("SELECT * FROM person WHERE game_name = %s", (data[0]['title'],))
+                game = self.cur.fetchone()
+                
+                if not game:
+                    for item in data:
+                        self.cur.execute("""
+                            INSERT INTO person (game_name, game_link)
+                            VALUES (%s, %s);
+                        """, (item["title"], f"https://stopgame.ru{item['href']}"))
+                        self.conn.commit()
+                    else:
+                        break
+                    
+                
+    def close_connection(self):
+        """"Закрытие соединения с базой данных"""
+        self.cur.close()
+        self.conn.close()
 
-        data = soup.select("._card_1u499_4")
-        time.sleep(1 + (random.random() * (9 - 5)))
-
-        #Проверка на наличие определенной игры в sql 
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT * FROM person WHERE game_name = %s", (data[0]['title'], ))
-            game = cursor.fetchone()
-
-        #Добавление игр в sql и проверка с условием на наличие дубликата. Если данная игра есть в списке, условие не сработает и мы выходим из цикла.
-        if not game:
-            for item in data:
-                cur.execute("""INSERT INTO person (game_name, game_link)
-                VALUES (%s, %s);
-                """, (item["title"], f"https://stopgame.ru{item["href"]}"))
-                conn.commit()
-        else:
-            break
+# Использование класса
 
 
-cur.close()
-conn.close()
+db_config = {
+    'host': "localhost",
+    'dbname': "postgres",
+    'user': "postgres",
+    'password': "yashka000",
+    'port': "5432"
+}
+
+scraper = GameScraper(db_config)
+scraper.create_table()
+scraper.clear_table()
+scraper.parse_games()
+scraper.close_connection()
