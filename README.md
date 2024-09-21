@@ -3,7 +3,7 @@
 
 1. Установите необходимые зависимости:
 Откройте терминал и выполните следующую команду для установки требуемых библиотек:
-pip install requests beautifulsoup4 psycopg2
+pip install -r requirements.txtg2
 
 
 2. Настройте базу данных:
